@@ -3,11 +3,13 @@ package subpub
 import (
 	"context"
 	"fmt"
+	"sync"
 )
 
 // eventChannel is the main channel for sub-pub logic implementation.
 type eventChannel struct {
 	channels map[string]channelConfig
+	wg       sync.WaitGroup
 	flagDone bool
 }
 
@@ -63,15 +65,30 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 	e.channels[subject] = conf
 
 	for _, sub := range e.channels[subject].handlers {
-		go sub.handler(msg)
+		e.wg.Add(1)
+		go func() {
+			defer e.wg.Done()
+			sub.mut.Lock()
+			sub.handler(msg)
+			sub.mut.Unlock()
+		}()
 	}
-
 	return nil
 }
 
 // Close shutdowns the eventChannel.
 func (e *eventChannel) Close(ctx context.Context) error {
-	<-ctx.Done()
+	const op = "subpub.Close"
+
 	e.flagDone = true
+
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("error of the %s: fast shutdown: %s", op, ctx.Err())
+
+	default:
+		e.wg.Wait()
+	}
+
 	return nil
 }

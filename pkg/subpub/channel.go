@@ -1,11 +1,17 @@
 package subpub
 
+import "sync"
+
 // channelSub defines the logic of the channel's definite subscription.
 type channelSub struct {
 	// handler defines the logic of message's handling after the publisher's publishing.
 	handler MessageHandler
+
 	// flagSub defines whether the current subscription is still active.
 	flagSub bool
+
+	// mut defines the logic of handler synchronization.
+	mut sync.Mutex
 }
 
 // Unsubscribe defines the logic of the subscription's refusing.
