@@ -1,8 +1,6 @@
 package subpub
 
-import (
-	"sync"
-)
+import "sync"
 
 // channelSub defines the logic of the channel's definite subscription.
 type channelSub struct {

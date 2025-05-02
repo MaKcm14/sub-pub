@@ -1,6 +1,8 @@
 package subpub
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -96,35 +98,74 @@ func TestSubscribeNegativeCases(t *testing.T) {
 }
 
 func TestPublishPositiveCases(t *testing.T) {
-	var (
-		queue1       = make([]string, 0, 10)
-		testChannel1 = "test-channel1"
-		testMessage1 = "test-message1"
-		handler1     = func(msg interface{}) {
-			queue1 = append(queue1, msg.(string))
-		}
-	)
-	e := newEventChannel()
+	t.Run("TestPublishPositiveCasesCommonWorkCheck",
+		func(t *testing.T) {
+			var (
+				queue       = make([]string, 0, 10)
+				testChannel = "test-channel"
+				testMessage = "test-message"
+				handler     = func(msg interface{}) {
+					queue = append(queue, msg.(string))
+				}
+			)
+			e := newEventChannel()
 
-	sub, _ := e.Subscribe(testChannel1, handler1)
+			sub, _ := e.Subscribe(testChannel, handler)
 
-	err := e.Publish(testChannel1, testMessage1)
-	time.Sleep(time.Second * 1)
+			err := e.Publish(testChannel, testMessage)
+			time.Sleep(time.Second * 1)
 
-	assert.NoError(t, err, "expected the correct Publish executing")
-	assert.Equal(t, []string{testMessage1}, queue1)
+			assert.NoError(t, err, "expected the correct Publish executing")
+			assert.Equal(t, []string{testMessage}, queue)
 
-	sub.Unsubscribe()
-	queue1 = []string{}
+			sub.Unsubscribe()
+			queue = []string{}
 
-	err = e.Publish(testChannel1, testMessage1)
-	time.Sleep(time.Second * 1)
+			err = e.Publish(testChannel, testMessage)
+			time.Sleep(time.Second * 1)
 
-	assert.NoError(t, err, "expected the correct Publish executing")
-	assert.Equal(t, []string{}, queue1)
+			assert.NoError(t, err, "expected the correct Publish executing")
+			assert.Equal(t, []string{}, queue)
+
+		})
+
+	t.Run("TestPublishPositiveCasesQueueOrderCheck",
+		func(t *testing.T) {
+			var (
+				testChannel = "test-channel"
+				testMessage = "test-message"
+				queue       = make([]string, 0, 20)
+			)
+			e := newEventChannel()
+
+			e.Subscribe(testChannel, func(msg interface{}) {
+				queue = append(queue, msg.(string))
+			})
+
+			for i := 0; i != 20; i++ {
+				e.Publish(testChannel, fmt.Sprintf("%s-%d", testMessage, i))
+			}
+
+			time.Sleep(time.Second * 5)
+			assert.Equal(t, 20, len(queue),
+				"expected full completing the publishsin: actual it hasn't been completed")
+
+			for i := 0; i != 20; i++ {
+				assert.Equal(t, fmt.Sprintf("%s-%d", testMessage, i), queue[i],
+					"expected corresponding queue value: actual order is wrong")
+			}
+		})
 }
 
 func TestPublishNegativeCases(t *testing.T) {
+	var testSubject = "test-subject"
+	var testMsg = "test-message"
+	var confEventChannel = &eventChannel{
+		channels: map[string]channelConfig{
+			testSubject: newChannelConfig(),
+		},
+	}
+
 	type args struct {
 		subject string
 		msg     interface{}
@@ -137,18 +178,18 @@ func TestPublishNegativeCases(t *testing.T) {
 	}{
 		{
 			name:     "TestPublishNegativeCasesWrongSubject",
-			channels: newEventChannel(),
+			channels: confEventChannel,
 			args: args{
 				subject: "",
-				msg:     "test-msg",
+				msg:     testMsg,
 			},
 			wantErr: true,
 		},
 		{
 			name:     "TestPublishNegativeCasesWrongMessage",
-			channels: newEventChannel(),
+			channels: confEventChannel,
 			args: args{
-				subject: "test-subject",
+				subject: testSubject,
 				msg:     nil,
 			},
 			wantErr: true,
@@ -159,8 +200,17 @@ func TestPublishNegativeCases(t *testing.T) {
 				flagDone: true,
 			},
 			args: args{
-				subject: "test-subject",
-				msg:     "test-msg",
+				subject: testSubject,
+				msg:     testMsg,
+			},
+			wantErr: true,
+		},
+		{
+			name:     "TestPublishNegativeCasesUnexistingChannel",
+			channels: newEventChannel(),
+			args: args{
+				subject: testSubject,
+				msg:     testMsg,
 			},
 			wantErr: true,
 		},
@@ -181,11 +231,35 @@ func TestPublishNegativeCases(t *testing.T) {
 func TestClose(t *testing.T) {
 	t.Run("TestCloseCorrectShutDown",
 		func(t *testing.T) {
-			// TODO: test here the correct shutdown through the uncanceled ctx.
+			var (
+				testChannel = "test-channel"
+				testMessage = "test-message"
+			)
+			e := newEventChannel()
+			ctx := context.Background()
+
+			e.Subscribe(testChannel, func(msg interface{}) {
+				time.Sleep(time.Millisecond * 200)
+			})
+
+			for i := 0; i != 30; i++ {
+				e.Publish(testChannel, testMessage)
+			}
+
+			assert.NoError(t, e.Close(ctx), "expected nil error after closing: actual some err was got")
+			assert.Equal(t, true, e.flagDone, "expected shutdown condition after event channel closing")
 		})
 
 	t.Run("TestCloseIncorrectShutDown",
 		func(t *testing.T) {
-			// TODO: test here the incorrect shutdown through the canceled ctx.
+			e := newEventChannel()
+			ctx, cancel := context.WithCancel(context.Background())
+
+			cancel()
+			if err := e.Close(ctx); err == nil {
+				t.Error("expected error after closing: actual no error was got")
+			}
+
+			assert.Equal(t, true, e.flagDone, "expected shutdown condition after event channel closing")
 		})
 }

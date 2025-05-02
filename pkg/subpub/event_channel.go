@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 )
 
 // eventChannel is the main channel for sub-pub logic implementation.
@@ -64,15 +65,24 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 
 	e.channels[subject] = conf
 
+	checkGoStart := atomic.Int64{}
 	for _, sub := range e.channels[subject].handlers {
 		e.wg.Add(1)
 		go func() {
 			defer e.wg.Done()
+
+			checkGoStart.Add(1)
+
 			sub.mut.Lock()
 			sub.handler(msg)
 			sub.mut.Unlock()
 		}()
 	}
+
+	for checkGoStart.Load() != int64(len(e.channels[subject].handlers)) {
+		continue
+	}
+
 	return nil
 }
 
