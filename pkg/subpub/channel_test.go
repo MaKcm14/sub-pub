@@ -19,6 +19,10 @@ func TestUpdateSub(t *testing.T) {
 			c.updateSub()
 
 			assert.Equal(t, 2, len(c.handlers), "try to update the channelSubs: wrong result was got")
+
+			for _, sub := range c.handlers {
+				assert.Equal(t, true, sub.flagSub, "expected active flagSub value: deactive flagSub was got")
+			}
 		})
 
 	t.Run("TestUpdateSubMarginalPositiveCases",
@@ -28,7 +32,7 @@ func TestUpdateSub(t *testing.T) {
 			c.updateSub()
 
 			assert.NotPanics(t, c.updateSub,
-				"try to update the empty channelSubs: panic was return on configured object")
+				"try to update the empty channelSubs: panic was generated on configured object")
 
 			assert.Equal(t, len(c.handlers), 0, "try to update the empty channelSubs: new subs were appeared")
 		})

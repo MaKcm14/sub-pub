@@ -11,11 +11,12 @@ import (
 )
 
 func TestSubscribePositiveCases(t *testing.T) {
-	var testChannel1 = "test-channel"
-	var testChannel2 = "test-channel2"
-	var h = func(msg interface{}) {}
-	var e = newEventChannel()
-
+	var (
+		testChannel1 = "test-channel"
+		testChannel2 = "test-channel2"
+		h            = func(msg interface{}) {}
+		e            = newEventChannel()
+	)
 	_, err := e.Subscribe(testChannel1, h)
 
 	assert.NoError(t, err, "expected nil error after the right case of Subscribe was called")
@@ -98,35 +99,107 @@ func TestSubscribeNegativeCases(t *testing.T) {
 }
 
 func TestPublishPositiveCases(t *testing.T) {
-	t.Run("TestPublishPositiveCasesCommonWorkCheck",
+	t.Run("TestPublishPositiveCasesCommonWorkCheck_SingleSubscribersBySingleChannel",
 		func(t *testing.T) {
 			var (
-				queue       = make([]string, 0, 10)
 				testChannel = "test-channel"
 				testMessage = "test-message"
-				handler     = func(msg interface{}) {
-					queue = append(queue, msg.(string))
+			)
+			var (
+				queue1   = make([]string, 0, 10)
+				queue2   = make([]string, 0, 10)
+				queue3   = make([]string, 0, 10)
+				handler1 = func(msg interface{}) {
+					queue1 = append(queue1, msg.(string))
+				}
+				handler2 = func(msg interface{}) {
+					queue2 = append(queue2, msg.(string))
+				}
+				handler3 = func(msg interface{}) {
+					queue3 = append(queue3, msg.(string))
 				}
 			)
 			e := newEventChannel()
 
-			sub, _ := e.Subscribe(testChannel, handler)
+			sub1, _ := e.Subscribe(fmt.Sprintf("%s-%d", testChannel, 1), handler1)
+			sub2, _ := e.Subscribe(fmt.Sprintf("%s-%d", testChannel, 2), handler2)
+			e.Subscribe(fmt.Sprintf("%s-%d", testChannel, 3), handler3)
+
+			for i := 0; i != 3; i++ {
+				err := e.Publish(fmt.Sprintf("%s-%d", testChannel, i+1), testMessage)
+				assert.NoError(t, err, "expected correct Publish work on the configured channel")
+			}
+			time.Sleep(time.Second * 5)
+
+			assert.Equal(t, []string{testMessage}, queue1, "expected correct queue1: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage}, queue2, "expected correct queue2: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
+
+			sub1.Unsubscribe()
+			sub2.Unsubscribe()
+
+			queue1, queue2 = []string{}, []string{}
+
+			for i := 0; i != 3; i++ {
+				err := e.Publish(fmt.Sprintf("%s-%d", testChannel, i+1), testMessage)
+				assert.NoError(t, err, "expected the correct Publish executing after the cancelation the sub")
+			}
+			time.Sleep(time.Second * 5)
+
+			assert.Equal(t, []string{}, queue1, "expected empty queue1: actual wrong queue was got")
+			assert.Equal(t, []string{}, queue2, "expected empty queue2: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage, testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
+		})
+
+	t.Run("TestPublishPositiveCasesCommonWorkCheck_MultipleSubscribersBySingleChannel",
+		func(t *testing.T) {
+			var (
+				testChannel = "test-channel"
+				testMessage = "test-message"
+			)
+			var (
+				queue1   = make([]string, 0, 10)
+				queue2   = make([]string, 0, 10)
+				queue3   = make([]string, 0, 10)
+				handler1 = func(msg interface{}) {
+					queue1 = append(queue1, msg.(string))
+				}
+				handler2 = func(msg interface{}) {
+					queue2 = append(queue2, msg.(string))
+				}
+				handler3 = func(msg interface{}) {
+					queue3 = append(queue3, msg.(string))
+				}
+			)
+			e := newEventChannel()
+
+			sub1, _ := e.Subscribe(testChannel, handler1)
+			sub2, _ := e.Subscribe(testChannel, handler2)
+			e.Subscribe(testChannel, handler3)
+
+			for i := 0; i != 2; i++ {
+				err := e.Publish(testChannel, testMessage)
+				assert.NoError(t, err, "expected correct Publish work on the configured channel")
+			}
+			time.Sleep(time.Second * 5)
+
+			assert.Equal(t, []string{testMessage, testMessage}, queue1, "expected correct queue1: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage, testMessage}, queue2, "expected correct queue2: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage, testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
+
+			sub1.Unsubscribe()
+			sub2.Unsubscribe()
+
+			queue1, queue2 = []string{}, []string{}
 
 			err := e.Publish(testChannel, testMessage)
-			time.Sleep(time.Second * 1)
+			assert.NoError(t, err, "expected the correct Publish executing after the cancelation the sub")
 
-			assert.NoError(t, err, "expected the correct Publish executing")
-			assert.Equal(t, []string{testMessage}, queue)
+			time.Sleep(time.Second * 5)
 
-			sub.Unsubscribe()
-			queue = []string{}
-
-			err = e.Publish(testChannel, testMessage)
-			time.Sleep(time.Second * 1)
-
-			assert.NoError(t, err, "expected the correct Publish executing")
-			assert.Equal(t, []string{}, queue)
-
+			assert.Equal(t, []string{}, queue1, "expected empty queue1: actual wrong queue was got")
+			assert.Equal(t, []string{}, queue2, "expected empty queue2: actual wrong queue was got")
+			assert.Equal(t, []string{testMessage, testMessage, testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
 		})
 
 	t.Run("TestPublishPositiveCasesQueueOrderCheck",
@@ -148,7 +221,7 @@ func TestPublishPositiveCases(t *testing.T) {
 
 			time.Sleep(time.Second * 5)
 			assert.Equal(t, 20, len(queue),
-				"expected full completing the publishsin: actual it hasn't been completed")
+				"expected full completing the publishsing: actual it hasn't been completed")
 
 			for i := 0; i != 20; i++ {
 				assert.Equal(t, fmt.Sprintf("%s-%d", testMessage, i), queue[i],
