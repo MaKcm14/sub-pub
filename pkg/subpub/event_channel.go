@@ -26,11 +26,11 @@ func (e *eventChannel) Subscribe(subject string, cb MessageHandler) (Subscriptio
 	const op = "subpub.Subscribe"
 
 	if e.flagDone {
-		return nil, fmt.Errorf("error of the %s: try to subscribe after the work done", op)
+		return nil, fmt.Errorf("error of the %s: %w: try to subscribe after the work done", op, ErrSystemCondition)
 	} else if cb == nil {
-		return nil, fmt.Errorf("error of the %s: try to subscribe with the nil handler", op)
+		return nil, fmt.Errorf("error of the %s: %w: try to subscribe with the nil handler", op, ErrInputData)
 	} else if subject == "" {
-		return nil, fmt.Errorf("error of the %s: try to subscribe on the empty subject", subject)
+		return nil, fmt.Errorf("error of the %s: %w: try to subscribe on the empty subject", subject, ErrInputData)
 	}
 
 	if conf, ok := e.channels[subject]; ok {
@@ -51,13 +51,13 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 	const op = "subpub.Publish"
 
 	if e.flagDone {
-		return fmt.Errorf("error of the %s: try to subscribe after the work done", op)
+		return fmt.Errorf("error of the %s: %w: try to subscribe after the work done", op, ErrSystemCondition)
 	} else if subject == "" {
-		return fmt.Errorf("error of the %s: try to publish into the empty subject", op)
+		return fmt.Errorf("error of the %s: %w: try to publish into the empty subject", op, ErrInputData)
 	} else if msg == nil {
-		return fmt.Errorf("error of the %s: try to publish the nil msg", op)
+		return fmt.Errorf("error of the %s: %w: try to publish the nil msg", op, ErrInputData)
 	} else if _, ok := e.channels[subject]; !ok {
-		return fmt.Errorf("error of the %s: try to publish into the unexisting channel", op)
+		return fmt.Errorf("error of the %s: %w: try to publish into the unexisting channel", op, ErrInputData)
 	}
 
 	conf := e.channels[subject]

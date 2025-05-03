@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package spserv;
+
+option go_package = "github.com/MaKcm14/vk-test/internal/controller/spserv";
+
+service PubSub {
+    //  Подписка (сервер отправляет поток событий)
+    rpc Subscribe(SubscribeRequest) returns (stream Event) {}
+
+    // Публикация (классический запрос-ответ)
+    rpc Publish(PublishRequest) returns (google.protobuf.Empty) {}
+}
+
+message SubscribeRequest {
+    string key = 1;
+}
+
+message PublishRequest {
+    string key = 1;
+    string data = 2;
+}
+
+message Event {
+    string data = 1;
+}
