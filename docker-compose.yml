@@ -1,0 +1,16 @@
+services:
+    subpub:
+        container_name: subpub
+
+        build: .
+
+        ports:
+        - 9736:9736
+
+        volumes:
+        - subpub-volume:/subpub-service/logs
+
+
+volumes:
+    subpub-volume:
+      name: logs

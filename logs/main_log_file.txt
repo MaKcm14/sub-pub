@@ -1,0 +1,5 @@
+time=2025-05-04T15:09:11.173+03:00 level=INFO msg="configuring the service begun"
+time=2025-05-04T15:09:11.215+03:00 level=INFO msg="configuring the sub-pub service started"
+time=2025-05-04T15:09:11.215+03:00 level=INFO msg="open the connection on the 0.0.0.0:9736"
+time=2025-05-04T15:09:11.216+03:00 level=INFO msg="starting the service"
+time=2025-05-04T15:09:11.216+03:00 level=INFO msg="starting the grpc-server"

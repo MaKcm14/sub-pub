@@ -20,6 +20,7 @@ type SubPubService struct {
 func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (SubPubService, error) {
 	const op = "spserv.NewSubPub"
 
+	log.Info(fmt.Sprintf("opening the connection on the %s", socket))
 	lis, err := net.Listen("tcp", socket)
 
 	if err != nil {
@@ -43,11 +44,13 @@ func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (S
 
 // Run starts the serving new client's requests.
 func (s *SubPubService) Run() {
+	s.log.Info("starting the grpc-server")
 	s.serv.Serve(s.conn)
 }
 
 // Close releases the resources of the server.
 func (s *SubPubService) Close() {
+	s.log.Info("releasing resources of the service")
 	s.conn.Close()
 	s.kern.close()
 }

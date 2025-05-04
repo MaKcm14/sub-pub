@@ -39,6 +39,8 @@ func NewService() Service {
 		panic(critErr)
 	}
 
+	log.Info("configuring the sub-pub service started")
+
 	service, err := spserv.NewSubPubService(log, conf.Socket, subpub.NewSubPub())
 
 	if err != nil {
@@ -59,6 +61,7 @@ func (s *Service) Start() {
 	defer s.Close()
 	defer s.log.Info("the service was FULLY STOPPED")
 
+	s.log.Info("starting the service")
 	s.serv.Run()
 }
 

@@ -13,8 +13,12 @@ type channelSub struct {
 	// flagSub defines whether the current subscription is still active.
 	flagSub atomic.Bool
 
-	// mut defines the logic of handler synchronization.
+	// mut defines the logic of channels swap synchronization.
 	mut sync.Mutex
+
+	// done defines the readiness of the last goroutine to hand over the flow of control to the next one
+	// to observe the FIFO order.
+	done chan bool
 }
 
 // Unsubscribe defines the logic of the subscription's refusing.
@@ -54,4 +58,12 @@ func (c *channelConfig) updateSub() {
 	}
 
 	c.handlers = newHandler
+}
+
+// close defines closing the channels to prevent the goroutines leak.
+func (c *channelConfig) close() {
+	for _, sub := range c.handlers {
+		<-sub.done
+		close(sub.done)
+	}
 }

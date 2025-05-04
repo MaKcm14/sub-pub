@@ -34,7 +34,6 @@ func (s *subPubServer) Subscribe(request *SubscribeRequest, stream grpc.ServerSt
 	msgCh := make(chan string)
 	sub, err := s.serv.Subscribe(request.Key, func(msg interface{}) {
 		msgCh <- msg.(string)
-		// TODO: write the logic of the Unsubscribe.
 	})
 
 	if err != nil {
@@ -53,8 +52,9 @@ func (s *subPubServer) Subscribe(request *SubscribeRequest, stream grpc.ServerSt
 
 	for msg := range msgCh {
 		if err := stream.Send(&Event{Data: msg}); err != nil {
-			// TODO: write the logic of the Unsubscribe.
-			_ = sub
+			// TODO: rewrite this part: think there's more efficiency solution can be.
+			sub.Unsubscribe()
+			close(msgCh)
 
 			sendErr := fmt.Errorf("error of the %s: %w: %s", op, ErrSendingMsg, err)
 			s.log.Error(sendErr.Error())

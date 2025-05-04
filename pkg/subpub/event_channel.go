@@ -78,25 +78,46 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 
 	e.channels[subject] = conf
 
-	checkGoStart := atomic.Int64{}
+	wgStart := sync.WaitGroup{}
+	wgStart.Add(len(e.channels[subject].handlers))
+
 	for _, sub := range e.channels[subject].handlers {
 		e.wg.Add(1)
 		go func() {
 			defer e.wg.Done()
-
-			checkGoStart.Add(1)
+			wgStart.Done()
 
 			sub.mut.Lock()
-			sub.handler(msg)
+			lastDone := sub.done
+			nextDone := make(chan bool)
+
+			sub.done = nextDone
 			sub.mut.Unlock()
+
+			if lastDone != nil {
+				<-lastDone
+			}
+			defer func() {
+				if err := recover(); err != nil {
+					nextDone <- true
+				}
+			}()
+
+			sub.handler(msg)
+
+			nextDone <- true
 		}()
 	}
-
-	for checkGoStart.Load() != int64(len(e.channels[subject].handlers)) {
-		continue
-	}
+	wgStart.Wait()
 
 	return nil
+}
+
+// close defines the logic of releasing the resources connected with the channels.
+func (e *eventChannel) close() {
+	for _, ch := range e.channels {
+		ch.close()
+	}
 }
 
 // Close shutdowns the eventChannel.
@@ -110,6 +131,10 @@ func (e *eventChannel) Close(ctx context.Context) error {
 		return fmt.Errorf("error of the %s: fast shutdown: %s", op, ctx.Err())
 
 	default:
+		e.mut.Lock()
+		e.close()
+		e.mut.Unlock()
+
 		e.wg.Wait()
 	}
 
