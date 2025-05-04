@@ -9,15 +9,22 @@ import (
 
 // eventChannel is the main channel for sub-pub logic implementation.
 type eventChannel struct {
+	// channels defines the subscriptions on the channels and its corresponding handlers.
 	channels map[string]channelConfig
-	wg       sync.WaitGroup
-	flagDone bool
+
+	// wg defines the object for correct closing.
+	wg sync.WaitGroup
+
+	// flagDone defines the condition of the eventChannel.
+	flagDone atomic.Bool
+
+	// mut helps syncronize the access to the channels.
+	mut sync.Mutex
 }
 
 func newEventChannel() *eventChannel {
 	return &eventChannel{
 		channels: make(map[string]channelConfig),
-		flagDone: false,
 	}
 }
 
@@ -25,13 +32,16 @@ func newEventChannel() *eventChannel {
 func (e *eventChannel) Subscribe(subject string, cb MessageHandler) (Subscription, error) {
 	const op = "subpub.Subscribe"
 
-	if e.flagDone {
+	if e.flagDone.Load() {
 		return nil, fmt.Errorf("error of the %s: %w: try to subscribe after the work done", op, ErrSystemCondition)
 	} else if cb == nil {
 		return nil, fmt.Errorf("error of the %s: %w: try to subscribe with the nil handler", op, ErrInputData)
 	} else if subject == "" {
 		return nil, fmt.Errorf("error of the %s: %w: try to subscribe on the empty subject", subject, ErrInputData)
 	}
+
+	e.mut.Lock()
+	defer e.mut.Unlock()
 
 	if conf, ok := e.channels[subject]; ok {
 		sub := conf.addSub(cb)
@@ -50,7 +60,7 @@ func (e *eventChannel) Subscribe(subject string, cb MessageHandler) (Subscriptio
 func (e *eventChannel) Publish(subject string, msg interface{}) error {
 	const op = "subpub.Publish"
 
-	if e.flagDone {
+	if e.flagDone.Load() {
 		return fmt.Errorf("error of the %s: %w: try to subscribe after the work done", op, ErrSystemCondition)
 	} else if subject == "" {
 		return fmt.Errorf("error of the %s: %w: try to publish into the empty subject", op, ErrInputData)
@@ -59,6 +69,9 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 	} else if _, ok := e.channels[subject]; !ok {
 		return fmt.Errorf("error of the %s: %w: try to publish into the unexisting channel", op, ErrInputData)
 	}
+
+	e.mut.Lock()
+	defer e.mut.Unlock()
 
 	conf := e.channels[subject]
 	conf.updateSub()
@@ -90,7 +103,7 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 func (e *eventChannel) Close(ctx context.Context) error {
 	const op = "subpub.Close"
 
-	e.flagDone = true
+	e.flagDone.Store(true)
 
 	select {
 	case <-ctx.Done():

@@ -35,6 +35,8 @@ func TestSubscribePositiveCases(t *testing.T) {
 
 func TestSubscribeNegativeCases(t *testing.T) {
 	var h = func(msg interface{}) {}
+	var closedEvenChannel = &eventChannel{}
+	closedEvenChannel.flagDone.Store(true)
 
 	type args struct {
 		subject string
@@ -68,10 +70,8 @@ func TestSubscribeNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "TestSubscribeNegativeCasesWrongEventChannelState",
-			channels: &eventChannel{
-				flagDone: true,
-			},
+			name:     "TestSubscribeNegativeCasesWrongEventChannelState",
+			channels: closedEvenChannel,
 			args: args{
 				subject: "test-subject",
 				cb:      h,
@@ -82,10 +82,7 @@ func TestSubscribeNegativeCases(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &eventChannel{
-				channels: tt.channels.channels,
-				flagDone: tt.channels.flagDone,
-			}
+			e := tt.channels
 			got, err := e.Subscribe(tt.args.subject, tt.args.cb)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("eventChannel.Subscribe() error = %v, wantErr %v", err, tt.wantErr)
@@ -238,6 +235,8 @@ func TestPublishNegativeCases(t *testing.T) {
 			testSubject: newChannelConfig(),
 		},
 	}
+	var closedEvenChannel = &eventChannel{}
+	closedEvenChannel.flagDone.Store(true)
 
 	type args struct {
 		subject string
@@ -268,10 +267,8 @@ func TestPublishNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "TestPublishNegativeCasesWrongEventChannelState",
-			channels: &eventChannel{
-				flagDone: true,
-			},
+			name:     "TestPublishNegativeCasesWrongEventChannelState",
+			channels: closedEvenChannel,
 			args: args{
 				subject: testSubject,
 				msg:     testMsg,
@@ -290,10 +287,7 @@ func TestPublishNegativeCases(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := &eventChannel{
-				channels: tt.channels.channels,
-				flagDone: tt.channels.flagDone,
-			}
+			e := tt.channels
 			if err := e.Publish(tt.args.subject, tt.args.msg); (err != nil) != tt.wantErr {
 				t.Errorf("eventChannel.Publish() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -320,7 +314,7 @@ func TestClose(t *testing.T) {
 			}
 
 			assert.NoError(t, e.Close(ctx), "expected nil error after closing: actual some err was got")
-			assert.Equal(t, true, e.flagDone, "expected shutdown condition after event channel closing")
+			assert.Equal(t, true, e.flagDone.Load(), "expected shutdown condition after event channel closing")
 		})
 
 	t.Run("TestCloseIncorrectShutDown",
@@ -333,6 +327,6 @@ func TestClose(t *testing.T) {
 				t.Error("expected error after closing: actual no error was got")
 			}
 
-			assert.Equal(t, true, e.flagDone, "expected shutdown condition after event channel closing")
+			assert.Equal(t, true, e.flagDone.Load(), "expected shutdown condition after event channel closing")
 		})
 }

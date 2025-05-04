@@ -7,6 +7,7 @@ import (
 
 	"github.com/MaKcm14/vk-test/internal/config"
 	"github.com/MaKcm14/vk-test/internal/controller/spserv"
+	"github.com/MaKcm14/vk-test/pkg/subpub"
 )
 
 // Service defines the main sub-pub service's builder.
@@ -14,7 +15,7 @@ type Service struct {
 	log     *slog.Logger
 	logFile *os.File
 
-	serv spserv.SubPub
+	serv spserv.SubPubService
 }
 
 func NewService() Service {
@@ -38,7 +39,7 @@ func NewService() Service {
 		panic(critErr)
 	}
 
-	service, err := spserv.NewSubPub(log, conf.Socket)
+	service, err := spserv.NewSubPubService(log, conf.Socket, subpub.NewSubPub())
 
 	if err != nil {
 		critErr := fmt.Errorf("error of the %s: %s", op, err)

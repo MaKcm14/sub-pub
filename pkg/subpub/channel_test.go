@@ -14,14 +14,14 @@ func TestUpdateSub(t *testing.T) {
 			c.addSub(nil)
 			c.addSub(nil)
 			c.addSub(nil)
-			c.handlers[0].flagSub = false
+			c.handlers[0].flagSub.Store(false)
 
 			c.updateSub()
 
 			assert.Equal(t, 2, len(c.handlers), "try to update the channelSubs: wrong result was got")
 
 			for _, sub := range c.handlers {
-				assert.Equal(t, true, sub.flagSub, "expected active flagSub value: deactive flagSub was got")
+				assert.Equal(t, true, sub.flagSub.Load(), "expected active flagSub value: deactive flagSub was got")
 			}
 		})
 
@@ -41,12 +41,11 @@ func TestUpdateSub(t *testing.T) {
 func TestUnsubscribe(t *testing.T) {
 	t.Run("TestUnsubscribePositiveCases",
 		func(t *testing.T) {
-			c := channelSub{
-				flagSub: true,
-			}
+			c := channelSub{}
+			c.flagSub.Store(true)
 
 			c.Unsubscribe()
 
-			assert.Equal(t, c.flagSub, false, "try to deactivate the subscription: wrong result was got")
+			assert.Equal(t, c.flagSub.Load(), false, "try to deactivate the subscription: wrong result was got")
 		})
 }

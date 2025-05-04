@@ -1,6 +1,9 @@
 package subpub
 
-import "sync"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 // channelSub defines the logic of the channel's definite subscription.
 type channelSub struct {
@@ -8,7 +11,7 @@ type channelSub struct {
 	handler MessageHandler
 
 	// flagSub defines whether the current subscription is still active.
-	flagSub bool
+	flagSub atomic.Bool
 
 	// mut defines the logic of handler synchronization.
 	mut sync.Mutex
@@ -16,7 +19,7 @@ type channelSub struct {
 
 // Unsubscribe defines the logic of the subscription's refusing.
 func (c *channelSub) Unsubscribe() {
-	c.flagSub = false
+	c.flagSub.Store(false)
 }
 
 // channelConfig defines the channel's configuration.
@@ -33,9 +36,9 @@ func newChannelConfig() channelConfig {
 // addSub adds a new subscription to the channel.
 func (c *channelConfig) addSub(h MessageHandler) *channelSub {
 	sub := &channelSub{
-		flagSub: true,
 		handler: h,
 	}
+	sub.flagSub.Store(true)
 	c.handlers = append(c.handlers, sub)
 	return sub
 }
@@ -45,7 +48,7 @@ func (c *channelConfig) updateSub() {
 	newHandler := make([]*channelSub, 0, len(c.handlers))
 
 	for _, sub := range c.handlers {
-		if sub.flagSub {
+		if sub.flagSub.Load() {
 			newHandler = append(newHandler, sub)
 		}
 	}
