@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package spserv;
+package sprpc;
 
-option go_package = "github.com/MaKcm14/vk-test/internal/controller/spserv";
+option go_package = "github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc";
 
 service PubSub {
     //  Подписка (сервер отправляет поток событий)

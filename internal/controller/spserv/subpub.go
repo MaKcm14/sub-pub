@@ -1,24 +1,23 @@
 package spserv
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net"
 
-	"github.com/MaKcm14/vk-test/pkg/subpub"
-	grpc "google.golang.org/grpc"
+	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
+	"google.golang.org/grpc"
 )
 
 // SubPub is the main service that defines the grpc-server configuring.
 type SubPubService struct {
-	serv *grpc.Server
-	log  *slog.Logger
-	conn net.Listener
-	kern subpub.SubPub
+	grpcServ *grpc.Server
+	log      *slog.Logger
+	conn     net.Listener
+	kern     SPServer
 }
 
-func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (SubPubService, error) {
+func NewSubPubService(log *slog.Logger, socket string, server SPServer) (SubPubService, error) {
 	const op = "spserv.NewSubPub"
 
 	log.Info(fmt.Sprintf("opening the connection on the %s", socket))
@@ -30,28 +29,28 @@ func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (S
 		return SubPubService{}, errNet
 	}
 
-	serv := grpc.NewServer()
+	grpcServ := grpc.NewServer()
 
-	RegisterPubSubServer(serv, newSubPubServer(log, handler))
+	sprpc.RegisterPubSubServer(grpcServ, server)
 
 	return SubPubService{
-		log:  log,
-		serv: serv,
-		conn: lis,
-		kern: handler,
+		log:      log,
+		grpcServ: grpcServ,
+		conn:     lis,
+		kern:     server,
 	}, nil
 }
 
 // Run starts the serving new client's requests.
 func (s *SubPubService) Run() {
 	s.log.Info("starting the grpc-server")
-	s.serv.Serve(s.conn)
+	s.grpcServ.Serve(s.conn)
 }
 
 // Close releases the resources of the server.
 func (s *SubPubService) Close() {
 	s.log.Info("releasing resources of the service")
-	s.serv.GracefulStop()
+	s.grpcServ.GracefulStop()
 	s.conn.Close()
-	s.kern.Close(context.Background())
+	s.kern.Close()
 }

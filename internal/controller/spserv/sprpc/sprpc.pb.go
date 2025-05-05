@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v6.30.2
-// source: spserv.proto
+// source: sprpc.proto
 
-package spserv
+package sprpc
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -31,7 +31,7 @@ type SubscribeRequest struct {
 
 func (x *SubscribeRequest) Reset() {
 	*x = SubscribeRequest{}
-	mi := &file_spserv_proto_msgTypes[0]
+	mi := &file_sprpc_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *SubscribeRequest) String() string {
 func (*SubscribeRequest) ProtoMessage() {}
 
 func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spserv_proto_msgTypes[0]
+	mi := &file_sprpc_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
 func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return file_spserv_proto_rawDescGZIP(), []int{0}
+	return file_sprpc_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SubscribeRequest) GetKey() string {
@@ -76,7 +76,7 @@ type PublishRequest struct {
 
 func (x *PublishRequest) Reset() {
 	*x = PublishRequest{}
-	mi := &file_spserv_proto_msgTypes[1]
+	mi := &file_sprpc_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -88,7 +88,7 @@ func (x *PublishRequest) String() string {
 func (*PublishRequest) ProtoMessage() {}
 
 func (x *PublishRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_spserv_proto_msgTypes[1]
+	mi := &file_sprpc_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -101,7 +101,7 @@ func (x *PublishRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishRequest.ProtoReflect.Descriptor instead.
 func (*PublishRequest) Descriptor() ([]byte, []int) {
-	return file_spserv_proto_rawDescGZIP(), []int{1}
+	return file_sprpc_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PublishRequest) GetKey() string {
@@ -127,7 +127,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_spserv_proto_msgTypes[2]
+	mi := &file_sprpc_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +139,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_spserv_proto_msgTypes[2]
+	mi := &file_sprpc_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -152,7 +152,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_spserv_proto_rawDescGZIP(), []int{2}
+	return file_sprpc_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Event) GetData() string {
@@ -162,46 +162,46 @@ func (x *Event) GetData() string {
 	return ""
 }
 
-var File_spserv_proto protoreflect.FileDescriptor
+var File_sprpc_proto protoreflect.FileDescriptor
 
-const file_spserv_proto_rawDesc = "" +
+const file_sprpc_proto_rawDesc = "" +
 	"\n" +
-	"\fspserv.proto\x12\x06spserv\x1a\x1bgoogle/protobuf/empty.proto\"$\n" +
+	"\vsprpc.proto\x12\x05sprpc\x1a\x1bgoogle/protobuf/empty.proto\"$\n" +
 	"\x10SubscribeRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"6\n" +
 	"\x0ePublishRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\tR\x04data\"\x1b\n" +
 	"\x05Event\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data2\x7f\n" +
-	"\x06PubSub\x128\n" +
-	"\tSubscribe\x12\x18.spserv.SubscribeRequest\x1a\r.spserv.Event\"\x000\x01\x12;\n" +
-	"\aPublish\x12\x16.spserv.PublishRequest\x1a\x16.google.protobuf.Empty\"\x00B7Z5github.com/MaKcm14/vk-test/internal/controller/spservb\x06proto3"
+	"\x04data\x18\x01 \x01(\tR\x04data2|\n" +
+	"\x06PubSub\x126\n" +
+	"\tSubscribe\x12\x17.sprpc.SubscribeRequest\x1a\f.sprpc.Event\"\x000\x01\x12:\n" +
+	"\aPublish\x12\x15.sprpc.PublishRequest\x1a\x16.google.protobuf.Empty\"\x00B=Z;github.com/MaKcm14/vk-test/internal/controller/spserv/sprpcb\x06proto3"
 
 var (
-	file_spserv_proto_rawDescOnce sync.Once
-	file_spserv_proto_rawDescData []byte
+	file_sprpc_proto_rawDescOnce sync.Once
+	file_sprpc_proto_rawDescData []byte
 )
 
-func file_spserv_proto_rawDescGZIP() []byte {
-	file_spserv_proto_rawDescOnce.Do(func() {
-		file_spserv_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_spserv_proto_rawDesc), len(file_spserv_proto_rawDesc)))
+func file_sprpc_proto_rawDescGZIP() []byte {
+	file_sprpc_proto_rawDescOnce.Do(func() {
+		file_sprpc_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_sprpc_proto_rawDesc), len(file_sprpc_proto_rawDesc)))
 	})
-	return file_spserv_proto_rawDescData
+	return file_sprpc_proto_rawDescData
 }
 
-var file_spserv_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_spserv_proto_goTypes = []any{
-	(*SubscribeRequest)(nil), // 0: spserv.SubscribeRequest
-	(*PublishRequest)(nil),   // 1: spserv.PublishRequest
-	(*Event)(nil),            // 2: spserv.Event
+var file_sprpc_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_sprpc_proto_goTypes = []any{
+	(*SubscribeRequest)(nil), // 0: sprpc.SubscribeRequest
+	(*PublishRequest)(nil),   // 1: sprpc.PublishRequest
+	(*Event)(nil),            // 2: sprpc.Event
 	(*emptypb.Empty)(nil),    // 3: google.protobuf.Empty
 }
-var file_spserv_proto_depIdxs = []int32{
-	0, // 0: spserv.PubSub.Subscribe:input_type -> spserv.SubscribeRequest
-	1, // 1: spserv.PubSub.Publish:input_type -> spserv.PublishRequest
-	2, // 2: spserv.PubSub.Subscribe:output_type -> spserv.Event
-	3, // 3: spserv.PubSub.Publish:output_type -> google.protobuf.Empty
+var file_sprpc_proto_depIdxs = []int32{
+	0, // 0: sprpc.PubSub.Subscribe:input_type -> sprpc.SubscribeRequest
+	1, // 1: sprpc.PubSub.Publish:input_type -> sprpc.PublishRequest
+	2, // 2: sprpc.PubSub.Subscribe:output_type -> sprpc.Event
+	3, // 3: sprpc.PubSub.Publish:output_type -> google.protobuf.Empty
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -209,26 +209,26 @@ var file_spserv_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_spserv_proto_init() }
-func file_spserv_proto_init() {
-	if File_spserv_proto != nil {
+func init() { file_sprpc_proto_init() }
+func file_sprpc_proto_init() {
+	if File_sprpc_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_spserv_proto_rawDesc), len(file_spserv_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sprpc_proto_rawDesc), len(file_sprpc_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_spserv_proto_goTypes,
-		DependencyIndexes: file_spserv_proto_depIdxs,
-		MessageInfos:      file_spserv_proto_msgTypes,
+		GoTypes:           file_sprpc_proto_goTypes,
+		DependencyIndexes: file_sprpc_proto_depIdxs,
+		MessageInfos:      file_sprpc_proto_msgTypes,
 	}.Build()
-	File_spserv_proto = out.File
-	file_spserv_proto_goTypes = nil
-	file_spserv_proto_depIdxs = nil
+	File_sprpc_proto = out.File
+	file_sprpc_proto_goTypes = nil
+	file_sprpc_proto_depIdxs = nil
 }

@@ -1,34 +1,35 @@
 package spserv
 
 import (
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 
+	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
 	"github.com/MaKcm14/vk-test/pkg/subpub"
-	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// subPubServer defines the logic of handling the grpc's requests.
-type subPubServer struct {
-	UnimplementedPubSubServer
+// SubPubServer defines the logic of handling the grpc's requests.
+type SubPubServer struct {
+	sprpc.UnimplementedPubSubServer
 	serv subpub.SubPub
 	log  *slog.Logger
 }
 
-func newSubPubServer(log *slog.Logger, serv subpub.SubPub) *subPubServer {
-	return &subPubServer{
+func NewSubPubServer(log *slog.Logger, serv subpub.SubPub) *SubPubServer {
+	return &SubPubServer{
 		log:  log,
 		serv: serv,
 	}
 }
 
 // Subscribe defines the logic of the handling the subscribing request.
-func (s *subPubServer) Subscribe(request *SubscribeRequest, stream grpc.ServerStreamingServer[Event]) error {
+func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.ServerStreamingServer[sprpc.Event]) error {
 	const op = "spserv.Subscribe"
 
 	msgCh := make(chan string)
@@ -51,7 +52,7 @@ func (s *subPubServer) Subscribe(request *SubscribeRequest, stream grpc.ServerSt
 	}
 
 	for msg := range msgCh {
-		if err := stream.Send(&Event{Data: msg}); err != nil {
+		if err := stream.Send(&sprpc.Event{Data: msg}); err != nil {
 			// TODO: rewrite this part: think there's more efficiency solution can be.
 			sub.Unsubscribe()
 			close(msgCh)
@@ -66,7 +67,7 @@ func (s *subPubServer) Subscribe(request *SubscribeRequest, stream grpc.ServerSt
 }
 
 // Publish defines the logic of the handling the publishing requests.
-func (s *subPubServer) Publish(_ context.Context, request *PublishRequest) (*emptypb.Empty, error) {
+func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest) (*emptypb.Empty, error) {
 	const op = "spserv.Publish"
 
 	if err := s.serv.Publish(request.Key, request.Data); err != nil {
@@ -84,4 +85,9 @@ func (s *subPubServer) Publish(_ context.Context, request *PublishRequest) (*emp
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+// Close releases the resources of the SubPubServer.
+func (s *SubPubServer) Close() {
+	s.serv.Close(context.Background())
 }

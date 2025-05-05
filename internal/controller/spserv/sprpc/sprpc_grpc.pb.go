@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.30.2
-// source: spserv.proto
+// source: sprpc.proto
 
-package spserv
+package sprpc
 
 import (
 	context "context"
@@ -20,8 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PubSub_Subscribe_FullMethodName = "/spserv.PubSub/Subscribe"
-	PubSub_Publish_FullMethodName   = "/spserv.PubSub/Publish"
+	PubSub_Subscribe_FullMethodName = "/sprpc.PubSub/Subscribe"
+	PubSub_Publish_FullMethodName   = "/sprpc.PubSub/Publish"
 )
 
 // PubSubClient is the client API for PubSub service.
@@ -149,7 +149,7 @@ func _PubSub_Publish_Handler(srv interface{}, ctx context.Context, dec func(inte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PubSub_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "spserv.PubSub",
+	ServiceName: "sprpc.PubSub",
 	HandlerType: (*PubSubServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -164,5 +164,5 @@ var PubSub_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "spserv.proto",
+	Metadata: "sprpc.proto",
 }

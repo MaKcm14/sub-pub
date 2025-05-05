@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MaKcm14/vk-test/internal/controller/spserv"
+	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
@@ -16,7 +16,7 @@ import (
 
 type ClientSuite struct {
 	suite.Suite
-	client spserv.PubSubClient
+	client sprpc.PubSubClient
 
 	conn *grpc.ClientConn
 }
@@ -39,13 +39,13 @@ func newClientSuite() *ClientSuite {
 	if err != nil {
 		panic(fmt.Sprintf("error of the %s: %s", op, err))
 	}
-	c.client = spserv.NewPubSubClient(conn)
+	c.client = sprpc.NewPubSubClient(conn)
 	c.conn = conn
 
 	return c
 }
 
-func (c *ClientSuite) startPublisherCommonWork(msg []*spserv.PublishRequest) {
+func (c *ClientSuite) startPublisherCommonWork(msg []*sprpc.PublishRequest) {
 	time.Sleep(time.Second * 5)
 	for _, req := range msg {
 		_, err := c.client.Publish(context.Background(), req)
@@ -56,18 +56,18 @@ func (c *ClientSuite) startPublisherCommonWork(msg []*spserv.PublishRequest) {
 
 func (c *ClientSuite) TestPositiveCases_PubSubCommonWork() {
 	var (
-		msg         = make([]*spserv.PublishRequest, 0, 10)
+		msg         = make([]*sprpc.PublishRequest, 0, 10)
 		testChannel = "test-channel"
 		testMessage = "test-message"
 	)
 
 	for i := 0; i != 10; i++ {
-		msg = append(msg, &spserv.PublishRequest{
+		msg = append(msg, &sprpc.PublishRequest{
 			Key:  testChannel,
 			Data: fmt.Sprintf("%s-%d", testMessage, i),
 		})
 	}
-	stream, err := c.client.Subscribe(context.Background(), &spserv.SubscribeRequest{
+	stream, err := c.client.Subscribe(context.Background(), &sprpc.SubscribeRequest{
 		Key: testChannel,
 	})
 
@@ -94,7 +94,7 @@ func (c *ClientSuite) TestPublishNegativeCases_PublishUnexistingChannel() {
 		testMessage = "test-message"
 	)
 
-	_, err := c.client.Publish(context.Background(), &spserv.PublishRequest{
+	_, err := c.client.Publish(context.Background(), &sprpc.PublishRequest{
 		Key:  testChannel,
 		Data: testMessage,
 	})
@@ -104,7 +104,7 @@ func (c *ClientSuite) TestPublishNegativeCases_PublishUnexistingChannel() {
 func (c *ClientSuite) TestPublishNegativeCases_PublishEmptyChannel() {
 	var testMessage = "test-message"
 
-	_, err := c.client.Publish(context.Background(), &spserv.PublishRequest{
+	_, err := c.client.Publish(context.Background(), &sprpc.PublishRequest{
 		Key:  "",
 		Data: testMessage,
 	})
@@ -112,7 +112,7 @@ func (c *ClientSuite) TestPublishNegativeCases_PublishEmptyChannel() {
 }
 
 func (c *ClientSuite) TestSubscribeNegativeCases_SubscribeEmptySubject() {
-	stream, err := c.client.Subscribe(context.Background(), &spserv.SubscribeRequest{
+	stream, err := c.client.Subscribe(context.Background(), &sprpc.SubscribeRequest{
 		Key: "",
 	})
 	c.Suite.NoError(err, "expected no error after the subscribing with correct grpc config")
