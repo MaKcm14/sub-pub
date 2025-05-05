@@ -37,7 +37,7 @@ func (e *eventChannel) Subscribe(subject string, cb MessageHandler) (Subscriptio
 	} else if cb == nil {
 		return nil, fmt.Errorf("error of the %s: %w: try to subscribe with the nil handler", op, ErrInputData)
 	} else if subject == "" {
-		return nil, fmt.Errorf("error of the %s: %w: try to subscribe on the empty subject", subject, ErrInputData)
+		return nil, fmt.Errorf("error of the %s: %w: try to subscribe on the empty subject", op, ErrInputData)
 	}
 
 	e.mut.Lock()
@@ -75,6 +75,11 @@ func (e *eventChannel) Publish(subject string, msg interface{}) error {
 
 	conf := e.channels[subject]
 	conf.updateSub()
+
+	if len(conf.handlers) == 0 {
+		delete(e.channels, subject)
+		return nil
+	}
 
 	e.channels[subject] = conf
 

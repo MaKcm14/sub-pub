@@ -204,26 +204,54 @@ func TestPublishPositiveCases(t *testing.T) {
 			var (
 				testChannel = "test-channel"
 				testMessage = "test-message"
-				queue       = make([]string, 0, 20)
+				queue       = make([]string, 0, 10)
 			)
 			e := newEventChannel()
 
 			e.Subscribe(testChannel, func(msg interface{}) {
+				time.Sleep(time.Second * 2)
 				queue = append(queue, msg.(string))
 			})
 
-			for i := 0; i != 20; i++ {
+			for i := 0; i != 5; i++ {
 				e.Publish(testChannel, fmt.Sprintf("%s-%d", testMessage, i))
 			}
 
-			time.Sleep(time.Second * 5)
-			assert.Equal(t, 20, len(queue),
+			time.Sleep(time.Second * 15)
+			assert.Equal(t, 5, len(queue),
 				"expected full completing the publishsing: actual it hasn't been completed")
 
-			for i := 0; i != 20; i++ {
+			for i := 0; i != 5; i++ {
 				assert.Equal(t, fmt.Sprintf("%s-%d", testMessage, i), queue[i],
 					"expected corresponding queue value: actual order is wrong")
 			}
+		})
+}
+
+func TestPublishCornerCases(t *testing.T) {
+	t.Run("TestPublishCornerCases_CheckDeletingUnusedChannels",
+		func(t *testing.T) {
+			var (
+				testChannel = "test-channel"
+				testMessage = "test-message"
+			)
+			e := newEventChannel()
+
+			subs := make([]*channelSub, 0, 5)
+			for i := 0; i != 5; i++ {
+				s := &channelSub{}
+				s.flagSub.Store(false)
+				subs = append(subs, s)
+			}
+			e.channels[testChannel] = channelConfig{
+				handlers: subs,
+			}
+
+			e.Publish(testChannel, testMessage)
+
+			_, ok := e.channels[testChannel]
+
+			assert.Equal(t, ok, false, "expected unexisting of the empty channel")
 		})
 }
 
