@@ -1,6 +1,7 @@
 package spserv
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -14,7 +15,7 @@ type SubPubService struct {
 	serv *grpc.Server
 	log  *slog.Logger
 	conn net.Listener
-	kern *subPubServer
+	kern subpub.SubPub
 }
 
 func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (SubPubService, error) {
@@ -31,14 +32,13 @@ func NewSubPubService(log *slog.Logger, socket string, handler subpub.SubPub) (S
 
 	serv := grpc.NewServer()
 
-	subPubServ := newSubPubServer(log, handler)
-	RegisterPubSubServer(serv, subPubServ)
+	RegisterPubSubServer(serv, newSubPubServer(log, handler))
 
 	return SubPubService{
 		log:  log,
 		serv: serv,
 		conn: lis,
-		kern: subPubServ,
+		kern: handler,
 	}, nil
 }
 
@@ -51,6 +51,7 @@ func (s *SubPubService) Run() {
 // Close releases the resources of the server.
 func (s *SubPubService) Close() {
 	s.log.Info("releasing resources of the service")
+	s.serv.GracefulStop()
 	s.conn.Close()
-	s.kern.close()
+	s.kern.Close(context.Background())
 }

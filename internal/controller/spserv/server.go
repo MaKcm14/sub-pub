@@ -85,7 +85,3 @@ func (s *subPubServer) Publish(_ context.Context, request *PublishRequest) (*emp
 
 	return &emptypb.Empty{}, nil
 }
-
-func (s *subPubServer) close() {
-	s.serv.Close(context.Background())
-}
