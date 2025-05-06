@@ -12,9 +12,10 @@ import (
 // SubPub is the main service that defines the grpc-server configuring.
 type SubPubService struct {
 	grpcServ *grpc.Server
-	log      *slog.Logger
 	conn     net.Listener
-	kern     SPServer
+
+	kern SPServer
+	log  *slog.Logger
 }
 
 func NewSubPubService(log *slog.Logger, socket string, server SPServer) (SubPubService, error) {
@@ -30,7 +31,6 @@ func NewSubPubService(log *slog.Logger, socket string, server SPServer) (SubPubS
 	}
 
 	grpcServ := grpc.NewServer()
-
 	sprpc.RegisterPubSubServer(grpcServ, server)
 
 	return SubPubService{
@@ -49,8 +49,8 @@ func (s *SubPubService) Run() {
 
 // Close releases the resources of the server.
 func (s *SubPubService) Close() {
-	s.log.Info("releasing resources of the service")
+	s.log.Info("releasing the resources of the service")
+	s.kern.Close()
 	s.grpcServ.GracefulStop()
 	s.conn.Close()
-	s.kern.Close()
 }

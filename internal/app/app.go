@@ -67,6 +67,6 @@ func (s *Service) Start() {
 
 // Close calls the close funcs for releasing the resources.
 func (s *Service) Close() {
-	s.logFile.Close()
 	s.serv.Close()
+	s.logFile.Close()
 }

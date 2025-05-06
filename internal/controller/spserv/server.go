@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync/atomic"
 
 	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
 	"github.com/MaKcm14/vk-test/pkg/subpub"
@@ -19,6 +20,9 @@ type SubPubServer struct {
 	sprpc.UnimplementedPubSubServer
 	serv subpub.SubPub
 	log  *slog.Logger
+
+	// flagDone is the flag that stores the current service's condition.
+	flagDone atomic.Bool
 }
 
 func NewSubPubServer(log *slog.Logger, serv subpub.SubPub) *SubPubServer {
@@ -39,26 +43,33 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 
 	if err != nil {
 		var code codes.Code
-		var subErr = fmt.Errorf("error of the %s: %s", op, err)
+		var subErr error
 
 		if errors.Is(err, subpub.ErrInputData) {
 			code = codes.InvalidArgument
+			subErr = fmt.Errorf("%w: %s", ErrDataRequest, err)
 		} else if errors.Is(err, subpub.ErrSystemCondition) {
 			code = codes.Unavailable
+			subErr = fmt.Errorf("%w: %s", ErrServiceCondition, err)
 		}
-		s.log.Error(subErr.Error())
+		s.log.Error(fmt.Sprintf("error of the %s: %s", op, subErr))
 
 		return status.Error(code, subErr.Error())
 	}
 
 	for msg := range msgCh {
+		if s.flagDone.Load() {
+			sub.Unsubscribe()
+			close(msgCh)
+			return status.Error(codes.Canceled, ErrServiceCondition.Error())
+		}
 		if err := stream.Send(&sprpc.Event{Data: msg}); err != nil {
-			// TODO: rewrite this part: think there's more efficiency solution can be.
 			sub.Unsubscribe()
 			close(msgCh)
 
-			sendErr := fmt.Errorf("error of the %s: %w: %s", op, ErrSendingMsg, err)
-			s.log.Error(sendErr.Error())
+			sendErr := fmt.Errorf("%w: %s", ErrSendingMsg, err)
+			s.log.Error(fmt.Sprintf("error of the %s: %s", op, sendErr))
+
 			return status.Error(codes.Aborted, sendErr.Error())
 		}
 	}
@@ -72,14 +83,16 @@ func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest)
 
 	if err := s.serv.Publish(request.Key, request.Data); err != nil {
 		var code codes.Code
-		var pubErr = fmt.Errorf("error of the %s: %s", op, err)
+		var pubErr error
 
 		if errors.Is(err, subpub.ErrInputData) {
 			code = codes.InvalidArgument
+			pubErr = fmt.Errorf("%w: %s", ErrDataRequest, err)
 		} else if errors.Is(err, subpub.ErrSystemCondition) {
 			code = codes.Unavailable
+			pubErr = fmt.Errorf("%w: %s", ErrServiceCondition, err)
 		}
-		s.log.Error(pubErr.Error())
+		s.log.Error(fmt.Sprintf("error of the %s: %s", op, pubErr))
 
 		return nil, status.Error(code, pubErr.Error())
 	}
@@ -89,5 +102,7 @@ func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest)
 
 // Close releases the resources of the SubPubServer.
 func (s *SubPubServer) Close() {
+	s.flagDone.Store(true)
+	s.log.Info("service condition was changed on 'closed'")
 	s.serv.Close(context.Background())
 }
