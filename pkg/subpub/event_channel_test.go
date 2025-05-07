@@ -50,7 +50,7 @@ func TestSubscribeNegativeCases(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "TestSubscribeNegativeCasesWrongSubject",
+			name:     "TestSubscribeNegativeCases_WrongSubject",
 			channels: newEventChannel(),
 			args: args{
 				subject: "",
@@ -60,7 +60,7 @@ func TestSubscribeNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "TestSubscribeNegativeCasesWrongCallBackFunction",
+			name:     "TestSubscribeNegativeCases_WrongCallBackFunction",
 			channels: newEventChannel(),
 			args: args{
 				subject: "test-subject",
@@ -70,7 +70,7 @@ func TestSubscribeNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "TestSubscribeNegativeCasesWrongEventChannelState",
+			name:     "TestSubscribeNegativeCases_WrongEventChannelState",
 			channels: closedEvenChannel,
 			args: args{
 				subject: "test-subject",
@@ -96,7 +96,7 @@ func TestSubscribeNegativeCases(t *testing.T) {
 }
 
 func TestPublishPositiveCases(t *testing.T) {
-	t.Run("TestPublishPositiveCasesCommonWorkCheck_SingleSubscribersBySingleChannel",
+	t.Run("TestPublishPositiveCases_CommonWorkCheck_SingleSubscribersBySingleChannel",
 		func(t *testing.T) {
 			var (
 				testChannel = "test-channel"
@@ -148,7 +148,7 @@ func TestPublishPositiveCases(t *testing.T) {
 			assert.Equal(t, []string{testMessage, testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
 		})
 
-	t.Run("TestPublishPositiveCasesCommonWorkCheck_MultipleSubscribersBySingleChannel",
+	t.Run("TestPublishPositiveCases_CommonWorkCheck_MultipleSubscribersBySingleChannel",
 		func(t *testing.T) {
 			var (
 				testChannel = "test-channel"
@@ -199,7 +199,7 @@ func TestPublishPositiveCases(t *testing.T) {
 			assert.Equal(t, []string{testMessage, testMessage, testMessage}, queue3, "expected correct queue3: actual wrong queue was got")
 		})
 
-	t.Run("TestPublishPositiveCasesQueueOrderCheck",
+	t.Run("TestPublishPositiveCases_QueueOrderCheck",
 		func(t *testing.T) {
 			var (
 				testChannel = "test-channel"
@@ -277,7 +277,7 @@ func TestPublishNegativeCases(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "TestPublishNegativeCasesWrongSubject",
+			name:     "TestPublishNegativeCases_WrongSubject",
 			channels: confEventChannel,
 			args: args{
 				subject: "",
@@ -286,7 +286,7 @@ func TestPublishNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "TestPublishNegativeCasesWrongMessage",
+			name:     "TestPublishNegativeCases_WrongMessage",
 			channels: confEventChannel,
 			args: args{
 				subject: testSubject,
@@ -295,7 +295,7 @@ func TestPublishNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "TestPublishNegativeCasesWrongEventChannelState",
+			name:     "TestPublishNegativeCases_WrongEventChannelState",
 			channels: closedEvenChannel,
 			args: args{
 				subject: testSubject,
@@ -304,7 +304,7 @@ func TestPublishNegativeCases(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "TestPublishNegativeCasesUnexistingChannel",
+			name:     "TestPublishNegativeCases_UnexistingChannel",
 			channels: newEventChannel(),
 			args: args{
 				subject: testSubject,
@@ -324,7 +324,7 @@ func TestPublishNegativeCases(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	t.Run("TestCloseCorrectShutDown",
+	t.Run("TestClose_CorrectShutDown",
 		func(t *testing.T) {
 			var (
 				testChannel = "test-channel"
@@ -345,7 +345,7 @@ func TestClose(t *testing.T) {
 			assert.Equal(t, true, e.flagDone.Load(), "expected shutdown condition after event channel closing")
 		})
 
-	t.Run("TestCloseIncorrectShutDown",
+	t.Run("TestClose_IncorrectShutDown",
 		func(t *testing.T) {
 			e := newEventChannel()
 			ctx, cancel := context.WithCancel(context.Background())

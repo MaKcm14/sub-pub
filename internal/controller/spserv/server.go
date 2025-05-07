@@ -32,7 +32,7 @@ func NewSubPubServer(log *slog.Logger, serv subpub.SubPub) *SubPubServer {
 	}
 }
 
-// Subscribe defines the logic of the handling the subscribing request.
+// Subscribe defines the logic of the handling the subscribe requests.
 func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.ServerStreamingServer[sprpc.Event]) error {
 	const op = "spserv.Subscribe"
 
@@ -61,7 +61,7 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 		if s.flagDone.Load() {
 			sub.Unsubscribe()
 			close(msgCh)
-			return status.Error(codes.Canceled, ErrServiceCondition.Error())
+			return status.Error(codes.Aborted, ErrServiceCondition.Error())
 		}
 		if err := stream.Send(&sprpc.Event{Data: msg}); err != nil {
 			sub.Unsubscribe()
@@ -77,7 +77,7 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 	return nil
 }
 
-// Publish defines the logic of the handling the publishing requests.
+// Publish defines the logic of the handling the publish requests.
 func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest) (*emptypb.Empty, error) {
 	const op = "spserv.Publish"
 
@@ -103,6 +103,5 @@ func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest)
 // Close releases the resources of the SubPubServer.
 func (s *SubPubServer) Close() {
 	s.flagDone.Store(true)
-	s.log.Info("service condition was changed on 'closed'")
 	s.serv.Close(context.Background())
 }

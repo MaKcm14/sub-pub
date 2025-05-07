@@ -41,7 +41,9 @@ func NewService() Service {
 
 	log.Info("configuring the sub-pub service started")
 
-	service, err := spserv.NewSubPubService(log, conf.Socket, spserv.NewSubPubServer(log, subpub.NewSubPub()))
+	service, err := spserv.NewSubPubService(log, conf.Socket,
+		spserv.NewSubPubServer(log, subpub.NewSubPub()),
+	)
 
 	if err != nil {
 		critErr := fmt.Errorf("error of the %s: %s", op, err)
