@@ -49,7 +49,6 @@ func (s *SubPubService) Run() {
 
 // Close releases the resources of the server.
 func (s *SubPubService) Close() {
-	const op = "spserv.Close"
 	s.log.Info("releasing the resources of the service")
 
 	s.kern.Close()
@@ -57,10 +56,4 @@ func (s *SubPubService) Close() {
 
 	s.grpcServ.GracefulStop()
 	s.log.Info("service was gracefuly stopped")
-
-	if err := s.conn.Close(); err != nil {
-		s.log.Error(fmt.Sprintf("error of the %s: %s", op, err))
-		return
-	}
-	s.log.Info("socket was closed")
 }

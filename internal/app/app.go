@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/MaKcm14/vk-test/internal/config"
 	"github.com/MaKcm14/vk-test/internal/controller/spserv"
@@ -60,15 +62,20 @@ func NewService() Service {
 
 // Start starts the sub-pub service.
 func (s *Service) Start() {
-	defer s.Close()
-	defer s.log.Info("the service was FULLY STOPPED")
+	defer s.close()
 
 	s.log.Info("starting the service")
-	s.serv.Run()
+	go s.serv.Run()
+
+	sig := make(chan os.Signal, 3)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+
+	<-sig
 }
 
-// Close calls the close funcs for releasing the resources.
-func (s *Service) Close() {
+// сlose calls the close funcs for releasing the resources.
+func (s *Service) close() {
 	s.serv.Close()
+	s.log.Info("the service was FULLY STOPPED")
 	s.logFile.Close()
 }

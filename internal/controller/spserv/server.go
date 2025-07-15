@@ -23,12 +23,16 @@ type SubPubServer struct {
 
 	// flagDone is the flag that stores the current service's condition.
 	flagDone atomic.Bool
+
+	subMsgCh syncMap
+	curID    atomic.Int64
 }
 
 func NewSubPubServer(log *slog.Logger, serv subpub.SubPub) *SubPubServer {
 	return &SubPubServer{
-		log:  log,
-		serv: serv,
+		log:      log,
+		serv:     serv,
+		subMsgCh: newSyncMap(),
 	}
 }
 
@@ -37,6 +41,11 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 	const op = "spserv.Subscribe"
 
 	msgCh := make(chan string)
+	curID := int(s.curID.Load())
+
+	s.curID.Add(1)
+	s.subMsgCh.Add(int(s.curID.Load()), msgCh)
+
 	sub, err := s.serv.Subscribe(request.Key, func(msg interface{}) {
 		msgCh <- msg.(string)
 	})
@@ -58,14 +67,9 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 	}
 
 	for msg := range msgCh {
-		if s.flagDone.Load() {
-			sub.Unsubscribe()
-			close(msgCh)
-			return status.Error(codes.Aborted, ErrServiceCondition.Error())
-		}
 		if err := stream.Send(&sprpc.Event{Data: msg}); err != nil {
 			sub.Unsubscribe()
-			close(msgCh)
+			close(s.subMsgCh.Delete(curID))
 
 			sendErr := fmt.Errorf("%w: %s", ErrSendingMsg, err)
 			s.log.Error(fmt.Sprintf("error of the %s: %s", op, sendErr))
@@ -73,6 +77,12 @@ func (s *SubPubServer) Subscribe(request *sprpc.SubscribeRequest, stream grpc.Se
 			return status.Error(codes.Aborted, sendErr.Error())
 		}
 	}
+
+	if s.flagDone.Load() {
+		sub.Unsubscribe()
+		return status.Error(codes.Aborted, ErrServiceCondition.Error())
+	}
+	s.curID.Add(-1)
 
 	return nil
 }
@@ -103,5 +113,10 @@ func (s *SubPubServer) Publish(_ context.Context, request *sprpc.PublishRequest)
 // Close releases the resources of the SubPubServer.
 func (s *SubPubServer) Close() {
 	s.flagDone.Store(true)
+
+	s.subMsgCh.Range(func(ch chan string) {
+		close(ch)
+	})
+
 	s.serv.Close(context.Background())
 }
