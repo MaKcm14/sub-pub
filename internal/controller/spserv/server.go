@@ -24,8 +24,11 @@ type SubPubServer struct {
 	// flagDone is the flag that stores the current service's condition.
 	flagDone atomic.Bool
 
+	// subMsgCh stores the message chans for its forced closing.
 	subMsgCh syncMap
-	curID    atomic.Int64
+
+	// curID defines the current free chan id-number.
+	curID atomic.Int64
 }
 
 func NewSubPubServer(log *slog.Logger, serv subpub.SubPub) *SubPubServer {
