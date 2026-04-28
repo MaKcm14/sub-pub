@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"sync/atomic"
 
-	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
-	"github.com/MaKcm14/vk-test/pkg/subpub"
+	"github.com/MaKcm14/sub-pub/internal/controller/spserv/sprpc"
+	"github.com/MaKcm14/sub-pub/pkg/subpub"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

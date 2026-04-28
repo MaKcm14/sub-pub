@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
+	"github.com/MaKcm14/sub-pub/internal/controller/spserv/sprpc"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"

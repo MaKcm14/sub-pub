@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/MaKcm14/vk-test/internal/config"
-	"github.com/MaKcm14/vk-test/internal/controller/spserv"
-	"github.com/MaKcm14/vk-test/pkg/subpub"
+	"github.com/MaKcm14/sub-pub/internal/config"
+	"github.com/MaKcm14/sub-pub/internal/controller/spserv"
+	"github.com/MaKcm14/sub-pub/pkg/subpub"
 )
 
 // Service defines the main sub-pub service's builder.

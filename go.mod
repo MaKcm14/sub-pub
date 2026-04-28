@@ -1,6 +1,6 @@
-module github.com/MaKcm14/vk-test
+module github.com/MaKcm14/sub-pub
 
-go 1.23.1
+go 1.23
 
 require (
 	github.com/joho/godotenv v1.5.1

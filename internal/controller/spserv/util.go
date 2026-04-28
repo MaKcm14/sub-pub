@@ -3,7 +3,7 @@ package spserv
 import (
 	"sync"
 
-	"github.com/MaKcm14/vk-test/internal/controller/spserv/sprpc"
+	"github.com/MaKcm14/sub-pub/internal/controller/spserv/sprpc"
 )
 
 // SPServer defines the common interface for every Sub/Pub server implementation.
